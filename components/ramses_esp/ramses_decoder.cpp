@@ -589,11 +589,15 @@ HvacFanInfoPayload::decode(const uint8_t *payload, size_t len,
   res.has_fault = bool(flg & 0x80);
 
   uint8_t mode_val = res.raw_fan_mode;
-  if (scheme == HvacScheme::ORCON || scheme == HvacScheme::HOPPER || len == 4) {
+  if (scheme == HvacScheme::ORCON ||
+      (scheme != HvacScheme::HOPPER && len == 4)) {
+    // Follows Orcon 22F1 mode map (PR #1193):
+    // 0: away (15%), 1: low (33%), 2: medium (66%), 3: high (100%),
+    // 4/5: auto (50%), 6: boost (100%), 7: off (0%)
     switch (mode_val) {
     case 0:
-      res.preset_mode = FanPresetMode::OFF;
-      res.fan_speed_percent = 0.0f;
+      res.preset_mode = FanPresetMode::AWAY;
+      res.fan_speed_percent = 15.0f;
       break;
     case 1:
       res.preset_mode = FanPresetMode::LOW;
@@ -608,11 +612,49 @@ HvacFanInfoPayload::decode(const uint8_t *payload, size_t len,
       res.fan_speed_percent = 100.0f;
       break;
     case 4:
+    case 5:
+      res.preset_mode = FanPresetMode::AUTO;
+      res.fan_speed_percent = 50.0f;
+      break;
+    case 6:
       res.preset_mode = FanPresetMode::BOOST;
       res.fan_speed_percent = 100.0f;
       break;
+    case 7:
+      res.preset_mode = FanPresetMode::OFF;
+      res.fan_speed_percent = 0.0f;
+      break;
+    default:
+      res.preset_mode = FanPresetMode::UNKNOWN;
+      break;
+    }
+  } else if (scheme == HvacScheme::HOPPER) {
+    switch (mode_val) {
+    case 0:
+    case 1:
+      res.preset_mode = FanPresetMode::AWAY;
+      res.fan_speed_percent = 15.0f;
+      break;
+    case 2:
+      res.preset_mode = FanPresetMode::LOW;
+      res.fan_speed_percent = 33.0f;
+      break;
+    case 3:
+      res.preset_mode = FanPresetMode::MEDIUM;
+      res.fan_speed_percent = 66.0f;
+      break;
+    case 4:
     case 5:
       res.preset_mode = FanPresetMode::AUTO;
+      res.fan_speed_percent = 50.0f;
+      break;
+    case 6:
+      res.preset_mode = FanPresetMode::BOOST;
+      res.fan_speed_percent = 100.0f;
+      break;
+    case 7:
+      res.preset_mode = FanPresetMode::HIGH;
+      res.fan_speed_percent = 100.0f;
       break;
     default:
       res.preset_mode = FanPresetMode::UNKNOWN;
@@ -1049,6 +1091,11 @@ std::optional<OpenThermPayload> OpenThermPayload::decode(const uint8_t *payload,
     // Data ID 0x1C: Return Water Temperature (f8.8 float)
     else if (data_id == 0x1C) {
       res.return_temp =
+          static_cast<float>(u8_hi) + (static_cast<float>(u8_lo) / 256.0f);
+    }
+    // Data ID 0x12: CH Water Pressure in Bar (f8.8 float)
+    else if (data_id == 0x12) {
+      res.ch_pressure_bar =
           static_cast<float>(u8_hi) + (static_cast<float>(u8_lo) / 256.0f);
     }
     // Fallback: modulation in standard Honeywell OTB status frame

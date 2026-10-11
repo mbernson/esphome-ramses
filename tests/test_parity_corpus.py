@@ -4,8 +4,8 @@
 from __future__ import annotations
 
 from collections import Counter
+from datetime import UTC
 from datetime import datetime as dt
-from datetime import timezone
 from pathlib import Path
 
 from extract_parity_corpus import SUPPORTED_OPCODES, extract, normalise_frame
@@ -35,7 +35,7 @@ def main() -> int:
         if result is None:
             continue
         frame, opcode, _ = result
-        packet = Packet.from_port(dt.now(timezone.utc), frame)
+        packet = Packet.from_port(dt.now(UTC), frame)
         message = Message(packet.to_dto() if hasattr(packet, "to_dto") else packet)
         assert f"{int(message.code, 16):04X}" == opcode
         assert str(message.verb).strip() in {"I", "RP"}

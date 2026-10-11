@@ -6,8 +6,8 @@ from __future__ import annotations
 import json
 import subprocess
 import tempfile
+from datetime import UTC
 from datetime import datetime as dt
-from datetime import timezone
 from pathlib import Path
 
 from extract_parity_corpus import extract
@@ -16,7 +16,7 @@ from ramses_tx.packet import Packet
 
 
 def make_case(case: dict[str, object]) -> dict[str, object] | None:
-    packet = Packet.from_port(dt.now(timezone.utc), case["hgi80"])
+    packet = Packet.from_port(dt.now(UTC), case["hgi80"])
     message = Message(packet.to_dto() if hasattr(packet, "to_dto") else packet)
     payload = getattr(message, "payload", getattr(message, "data", {}))
     opcode = case["opcode"]

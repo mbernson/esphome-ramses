@@ -10,8 +10,8 @@ import json
 import os
 import subprocess
 import sys
+from datetime import UTC
 from datetime import datetime as dt
-from datetime import timezone
 
 from ramses_rf.messages import Message
 from ramses_tx.packet import Packet
@@ -19,7 +19,7 @@ from ramses_tx.packet import Packet
 
 def parse_with_ramses_rf(hgi80_line: str) -> dict:
     """Parse an HGI80 packet line using Python ramses_rf."""
-    pkt = Packet.from_port(dt.now(timezone.utc), hgi80_line)
+    pkt = Packet.from_port(dt.now(UTC), hgi80_line)
     msg = Message(pkt.to_dto() if hasattr(pkt, "to_dto") else pkt)
     return {
         "verb": str(msg.verb).strip(),
@@ -53,7 +53,12 @@ def assert_semantic_parity(case: dict, parsed: dict) -> None:
     elif code == "22F1":
         assert int(payload["fan_mode"], 16) == expected["fan_mode_raw"]
     elif code == "10E0":
-        assert payload["info_bytes"][5] == int(expected["oem_code"], 16)
+        info_b = (
+            bytes.fromhex(payload["info_bytes"])
+            if isinstance(payload["info_bytes"], str)
+            else payload["info_bytes"]
+        )
+        assert info_b[5] == int(expected["oem_code"], 16)
     elif code == "3150":
         assert payload["zone_index"] == f"{expected['domain_or_zone_index']:02X}"
         assert payload["heat_demand"] == expected["demand_pct"] / 100.0

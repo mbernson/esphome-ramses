@@ -395,6 +395,7 @@ struct OpenThermPayload {
   float modulation_percent{0.0f}; // 0.0 - 100.0%
   std::optional<float> flow_temp;
   std::optional<float> return_temp;
+  std::optional<float> ch_pressure_bar;
 
   static std::optional<OpenThermPayload> decode(const uint8_t *payload,
                                                 size_t len);

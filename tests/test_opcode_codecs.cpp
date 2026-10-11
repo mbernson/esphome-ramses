@@ -385,6 +385,15 @@ void test_opentherm_and_dhw_codecs() {
   TEST_ASSERT(std::abs(*ot_temp_dec->flow_temp - 55.50f) < 0.01f,
               "Flow temp is 55.50 C");
 
+  // OpenTherm CH Water Pressure (DataId 0x12 = 1.50 bar: 1 = 0x01, 0.50 * 256 =
+  // 128 = 0x80)
+  uint8_t ot_press[] = {0x00, 0x08, 0x12, 1, 128};
+  auto ot_press_dec = OpenThermPayload::decode(ot_press, sizeof(ot_press));
+  TEST_ASSERT(ot_press_dec.has_value(), "OpenTherm pressure decoded");
+  TEST_ASSERT(ot_press_dec->ch_pressure_bar.has_value(), "Pressure present");
+  TEST_ASSERT(std::abs(*ot_press_dec->ch_pressure_bar - 1.50f) < 0.01f,
+              "CH water pressure is 1.50 bar");
+
   uint8_t legacy_outdoor[] = {0x00, 45, 0x01};
   auto legacy_outdoor_dec =
       OutdoorTemperaturePayload::decode(legacy_outdoor, sizeof(legacy_outdoor));
@@ -563,6 +572,22 @@ void test_hvac_fan_info_31d9() {
               "Orcon mode 03 decoded as HIGH preset");
   TEST_ASSERT(dec_orcon->filter_dirty == false, "Filter is clean");
   TEST_ASSERT(dec_orcon->has_fault == false, "No fault");
+
+  // 1b. Orcon 4-byte frame: 00 00 00 00 (Mode 0 / Away)
+  const uint8_t orcon_away[] = {0x00, 0x00, 0x00, 0x00};
+  auto dec_away = HvacFanInfoPayload::decode(orcon_away, sizeof(orcon_away),
+                                             HvacScheme::ORCON);
+  TEST_ASSERT(dec_away.has_value(), "0x31D9 Orcon mode 00 decoded");
+  TEST_ASSERT(dec_away->preset_mode == FanPresetMode::AWAY,
+              "Orcon mode 00 decoded as AWAY preset");
+
+  // 1c. Orcon 4-byte frame: 00 00 07 00 (Mode 7 / Off)
+  const uint8_t orcon_off[] = {0x00, 0x00, 0x07, 0x00};
+  auto dec_off = HvacFanInfoPayload::decode(orcon_off, sizeof(orcon_off),
+                                            HvacScheme::ORCON);
+  TEST_ASSERT(dec_off.has_value(), "0x31D9 Orcon mode 07 decoded");
+  TEST_ASSERT(dec_off->preset_mode == FanPresetMode::OFF,
+              "Orcon mode 07 decoded as OFF preset");
 
   // 2. Status flags: 00 20 01 00 (Filter dirty + Mode 1 / Low)
   const uint8_t dirty_payload[] = {0x00, 0x20, 0x01, 0x00};
