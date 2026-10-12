@@ -37,7 +37,7 @@ Setting up your RAMSES devices follows a simple two-step process:
 └─────────────────────────────────┘       └─────────────────────────────────┘
 ```
 
-1. **Run Discovery**: Flash [`esp32-c6-ramses-discovery.yaml`](esp32-c6-ramses-discovery.yaml) to your ESP32. Navigate to `http://<esp-ip>/ramses` in your browser. As heating and ventilation units transmit (or respond to active probes), they populate the live dashboard table.
+1. **Run Discovery**: Flash the discovery engine using the **[1-Click Web Flasher](https://wlcrs.github.io/esphome-ramses/)** (in Chrome/Edge, zero install required) or compile [`esp32-c6-ramses-discovery.yaml`](esp32-c6-ramses-discovery.yaml) via the ESPHome dashboard. Navigate to `http://<esp-ip>/ramses` in your browser. As heating and ventilation units transmit (or respond to active probes), they populate the live dashboard table.
 2. **Deploy Native Entities**: Copy the generated YAML fragment from the discovery dashboard, paste it into your production config (such as [`esp32-c6-ramses-devices.yaml`](esp32-c6-ramses-devices.yaml)), and flash your device. All climate zones, ventilation controls, and sensors appear natively in Home Assistant.
 
 > [!TIP]

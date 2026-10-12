@@ -81,10 +81,13 @@ jobs:
           factory_bin=$(find .esphome/build -name "firmware.factory.bin" -type f | head -n 1)
           ota_bin=$(find .esphome/build -name "firmware.ota.bin" -type f | head -n 1)
 
-          if [ -n "$factory_bin" ] && [ -f "$factory_bin" ]; then
-            cp "$factory_bin" "dist/${name}.factory.bin"
-            echo "Staged: dist/${name}.factory.bin"
+          if [ -z "$factory_bin" ] || [ ! -f "$factory_bin" ]; then
+            echo "::error::firmware.factory.bin not found after compiling ${yaml_file}!"
+            exit 1
           fi
+          cp "$factory_bin" "dist/${name}.factory.bin"
+          echo "Staged: dist/${name}.factory.bin"
+
           if [ -n "$ota_bin" ] && [ -f "$ota_bin" ]; then
             cp "$ota_bin" "dist/${name}.ota.bin"
             echo "Staged: dist/${name}.ota.bin"
@@ -116,3 +119,55 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: dist/*
+
+  deploy-pages:
+    name: Deploy Web Flasher to GitHub Pages
+    runs-on: ubuntu-latest
+    needs: esphome-compile
+    if: github.ref == 'refs/heads/main'
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download Discovery Firmware
+        uses: actions/download-artifact@v4
+        with:
+          name: firmware-esp32-c6-ramses-discovery.yaml
+          path: dist
+
+      - name: Stage Web Flasher Site
+        run: |
+          mkdir -p site
+          cp docs/index.html site/
+          cp docs/manifest.json site/
+
+          # Locate CI-compiled discovery factory binary
+          factory_bin=$(find dist -type f -name "*discovery*.factory.bin" -o -name "esp32-c6-ramses-discovery.factory.bin" | head -n 1)
+          if [ -z "$factory_bin" ] || [ ! -f "$factory_bin" ]; then
+            echo "::error::Compiled discovery firmware binary not found in CI artifacts!"
+            ls -laR dist/
+            exit 1
+          fi
+
+          echo "Staging CI-compiled discovery binary: ${factory_bin} -> site/firmware.factory.bin"
+          cp "${factory_bin}" site/firmware.factory.bin
+          ls -lh site/
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages Artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+

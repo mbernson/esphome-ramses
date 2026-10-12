@@ -40,21 +40,42 @@ Every device in your house has a unique 2-digit device type and 6-digit identifi
 
 ## 2. What You Need Before Starting
 
-- An **ESP32 or ESP32-C6 board with a CC1101 transceiver** tuned to 868.3 MHz with an antenna connected.
+- An **ESP32-C6 board with a CC1101 transceiver** tuned to 868.3 MHz with an antenna connected.
   *(e.g., the pre-assembled Elecram ESP32-C6 wireless board).*
-- A standard **USB cable** to plug the ESP32 into your computer or Home Assistant server for initial flashing.
-- A running **Home Assistant** installation with the **ESPHome Dashboard** add-on installed.
+- A standard **USB data cable** to plug the board into your computer.
+- A desktop browser supporting Web Serial (**Google Chrome**, **Microsoft Edge**, or **Opera**).
 - Your home 2.4 GHz Wi-Fi network name (SSID) and password.
+- *(Optional)* Home Assistant with the ESPHome Dashboard add-on (only needed if you prefer compiling custom YAML manually instead of using the Web Flasher).
 
 ---
 
 ## Step 1: Flash the Discovery Engine (`ramses_discovery`)
 
-The first step is to let the ESP32 scan the airwaves to identify which devices are installed in your home.
+You have two choices to flash the discovery firmware:
 
-### 1. Create a New Configuration in ESPHome
+### Option A (Recommended): 1-Click Browser Web Flasher
+
+If you don't want to install or fiddle with the ESPHome dashboard, you can flash pre-compiled firmware directly from your web browser:
+
+1. Connect your ESP32-C6 board to your PC or Mac using a USB data cable.
+2. Open the **[ESPHome RAMSES Web Flasher](https://wlcrs.github.io/esphome-ramses/)** in Google Chrome or Microsoft Edge.
+3. Click **Install Discovery Engine**.
+4. In the browser popup, select your ESP32 USB serial port and click **Connect**.
+5. Click **Install** and wait for the progress bar to complete (~1 minute).
+6. Once finished, a dialog will appear asking you to connect the device to your Wi-Fi network (powered by *Improv Wi-Fi*). Select your Wi-Fi network and enter your password.
+7. The browser will confirm the connection and show your device's local IP address (e.g., `192.168.1.120`).
+
+> [!TIP]
+> That's it! You can now jump directly to [Step 2](#step-2-find-your-equipment-with-the-web-dashboard). You did not need to install ESPHome, Python, or configure any YAML files.
+
+---
+
+### Option B (Alternative): Using the ESPHome Dashboard
+
+If you prefer compiling the firmware yourself or have custom GPIO pins:
+
 1. In Home Assistant, open the **ESPHome** dashboard from the left sidebar.
-2. Click **+ New Device**, give it a name like `ramses-discovery`, and select your board type (for ESP32-C6, select **ESP32-C6**).
+2. Click **+ New Device**, name it `ramses-discovery`, and select **ESP32-C6**.
 3. Open the newly created configuration by clicking **Edit**.
 4. Replace its contents with the pre-built discovery template:
 
@@ -112,14 +133,8 @@ ramses_discovery:
   probing_interval: 30s
 ```
 
-> [!NOTE]
-> If your hardware is not an Elecram ESP32-C6 board, update the `board:`, `variant:`, and `GPIO` pin numbers to match your specific ESP32 wiring.
-
-### 2. Install to the ESP32
-1. Connect your ESP32 board to your computer using a USB cable.
-2. In the ESPHome editor, click **Install** $\rightarrow$ **Plug into this computer** (via Web Serial in Chrome/Edge) or **Plug into the computer running ESPHome Dashboard**.
-3. Follow the on-screen prompts to flash the firmware.
-4. Once completed, the ESP32 will connect to your Wi-Fi network and display its IP address (e.g., `192.168.1.120`).
+5. Click **Install** $\rightarrow$ **Plug into this computer** (via Web Serial in Chrome/Edge) and follow the on-screen prompts.
+6. Once completed, the ESP32 will connect to your Wi-Fi network and display its IP address (e.g., `192.168.1.120`).
 
 ---
 
@@ -157,7 +172,7 @@ Once connected to your Wi-Fi, the discovery engine starts listening immediately.
 
 ## Step 3: Create Your Permanent Setup (`ramses_devices`)
 
-Now that we know the exact IDs of all your devices, we can set up the lean, permanent firmware.
+Now that we know the exact IDs of all your devices, we can set up the lean, permanent firmware. To compile such a firmware, you need to have the ESPHome Dashboard installed, which can be installed as an app in the Home Assistant.
 
 1. In the ESPHome Dashboard, click **+ New Device** and name it something permanent, like `heating-gateway`.
 2. Click **Edit** and paste in your configuration:
@@ -207,9 +222,9 @@ ramses_esp:
   gdo0_pin: GPIO15
   gdo2_pin: GPIO14
 
-# ==========================================================
-# Discovered RAMSES Entities
-# ==========================================================
+# ===========================================================================
+# Discovered RAMSES Entities (copied from the discovery engine web interface)
+# ===========================================================================
 
 # 1. Heating Zones (Climate)
 climate:
