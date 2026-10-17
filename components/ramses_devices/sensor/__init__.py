@@ -15,7 +15,7 @@ DEPENDENCIES = ["ramses_esp"]
 RamsesSensor = ramses_devices_ns.class_(
     "RamsesSensor", sensor.Sensor, cg.Component, RamsesEntityBase
 )
-RamsesSensorType = ramses_devices_ns.enum("RamsesSensorType")
+RamsesSensorType = ramses_devices_ns.enum("RamsesSensorType", is_class=True)
 
 CONF_ZONE_INDEX = "zone_index"
 CONF_RELAY_INDEX = "relay_index"
