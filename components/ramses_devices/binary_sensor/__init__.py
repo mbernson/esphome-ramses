@@ -18,7 +18,7 @@ RamsesBinarySensor = ramses_devices_ns.class_(
     cg.Component,
     RamsesEntityBase,
 )
-RamsesBinarySensorType = ramses_devices_ns.enum("RamsesBinarySensorType")
+RamsesBinarySensorType = ramses_devices_ns.enum("RamsesBinarySensorType", is_class=True)
 
 CONF_ZONE_INDEX = "zone_index"
 CONF_TYPE = "type"
